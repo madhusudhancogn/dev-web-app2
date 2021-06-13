@@ -1,83 +1,68 @@
-pipeline{
+pipeline
+        {
+            agent any
+            // agent
+            // {
+            //     label 'node-1'
+            // }
+            tools{
+                maven 'maven3.8.1'
+            }
+            triggers {
+                //poll scm
+                pollSCM('* * * * *')
+                //Build periodically
+                //cron('* * * * *')
+            }
+            options{
+                buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '5', daysToKeepStr: '', numToKeepStr: '5'))
+                timestamps()
+            }
 
-agent any
+            stages{
+                stage('Checkout SCM'){
+                    steps{
+                        git branch: 'develop', credentialsId: '1b70f72e-2e9f-461a-9ae5-472619c69922',
+                                url: 'https://github.com/madhusudhancogn/dev-web-app2.git'
+                    }
+                }
+                stage('Build'){
+                    steps{
+                        sh "mvn clean package"
+                    }
+                }
+                stage('Sonar Scan'){
+                    steps{
+                        sh "mvn sonar:sonar"
+                    }
+                }
+                stage('Upload Artifacts'){
+                    steps{
+                        sh "mvn clean deploy"
+                    }
+                }
+                stage('Deploy Application To Tomcat'){
+                    steps{
+                        sshagent(['6e48e8ae-fa2a-4ddb-952e-da672794b5ce']) {
+                            sh "scp -o  StrictHostKeyChecking=no target/dev-web-app2.war ec2-user@3.138.111.93:/opt/apache-tomcat-9.0.45/webapps"
+                        }
+                    }
+                }
+            }
 
-tools
-{
-  maven 'maven3.6.3'
+            post{
+                success{
+                    emailext body: '''Build Triggered...success
+               Thanks,
+               Madhu G''', subject: 'Jenkin Build Status', to: 'techmadhu63021@gmail.com'
 
-}
+                }
 
-triggers{
- pollSCM('* * * * *')
-}
+                failure{
+                    emailext body: '''Build Finished...failure
+               Thanks,
+               Madhu G''', subject: 'Jenkin Build Status', to: 'techmadhu63021@gmail.com'
+                }
+            }
 
-options{
-    timestamps()
-    buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '2', daysToKeepStr: '', numToKeepStr: '2'))
-}
-
- stages{
-   
-   stage('CheckoutCode')
-   {
-     steps{
-	 git branch: 'development', credentialsId: '8e348aa2-9531-4dbe-863d-1adb64897470', url: 'https://github.com/MithunTechnologiesDevOps/maven-web-application.git'
-	 }
-   }
-   
-   stage('Build')
-   {
-    steps{
-	  sh "mvn clean package"
-	 }
-   }
-   
-    stage('ExecuteSonarQubeReport')
-   {
-     steps{
-	  sh "mvn sonar:sonar"
-	 }
-   }
-   
-   stage('UploadArtifactintoNexus')
-   {
-     steps{
-	  sh "mvn deploy"
-	 }
-   }
-   
-  stage('DeployAppIntoTomcat')
- {
-   steps{
-  sshagent(['2b7b0c6a-5eff-4f4a-82c3-3630f91c70b5']) {
-  sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@3.1.222.74:/opt/apache-tomcat-9.0.41/webapps/"
-  }
- }
- }
- 
-  
- 
- }
- 
- post{
- 
- 
- success{
- mail bcc: 'devopstrainingblr@gmail.com', body: '''BuildOver!....
-
- Regards,
- Mithun Technologies,
- 9980923226''', cc: 'devopstrainingblr@gmail.com', from: '', replyTo: '', subject: 'BuildOver!!', to: 'devopstrainingblr@gmail.com'
- }
- 
- failure{
- mail bcc: 'devopstrainingblr@gmail.com', body: '''BuildOver!....
-
- Regards,
- Mithun Technologies,
- 9980923226''', cc: 'devopstrainingblr@gmail.com', from: '', replyTo: '', subject: 'BuildOver!!', to: 'devopstrainingblr@gmail.com'
- }
- 
- }
-}
+        }
