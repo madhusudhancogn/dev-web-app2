@@ -1,54 +1,47 @@
-node ('master')
- {
-  
-  def mavenHome = tool name: "maven3.6.3"
-  
-      echo "GitHub BranhName ${env.BRANCH_NAME}"
-      echo "Jenkins Job Number ${env.BUILD_NUMBER}"
-      echo "Jenkins Node Name ${env.NODE_NAME}"
-  
-      echo "Jenkins Home ${env.JENKINS_HOME}"
-      echo "Jenkins URL ${env.JENKINS_URL}"
-      echo "JOB Name ${env.JOB_NAME}"
-  
-   //properties([[$class: 'JiraProjectProperty'], buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '2', daysToKeepStr: '', numToKeepStr: '2')), pipelineTriggers([pollSCM('* * * * *')])])
-  
-  stage("CheckOutCodeGit")
-  {
-   git branch: 'master', credentialsId: '65fb834f-a83b-4fe7-8e11-686245c47a65', url: 'https://github.com/MithunTechnologiesDevOps/maven-web-application.git'
- }
- 
- stage("Build")
- {
- sh "${mavenHome}/bin/mvn clean package"
- }
- 
-  /*
- stage("ExecuteSonarQubeReport")
- {
- sh "${mavenHome}/bin/mvn sonar:sonar"
- }
- 
- stage("UploadArtifactsintoNexus")
- {
- sh "${mavenHome}/bin/mvn deploy"
- }
- 
-  stage("DeployAppTomcat")
- {
-  sshagent(['423b5b58-c0a3-42aa-af6e-f0affe1bad0c']) {
-    sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war  ec2-user@15.206.91.239:/opt/apache-tomcat-9.0.34/webapps/" 
-  }
- }
- 
- stage('EmailNotification')
- {
- mail bcc: 'devopstrainingblr@gmail.com', body: '''Build is over
+node('master')
+        {
+            def mavenHome = tool name: "maven3.8.1"
 
- Thanks,
- Mithun Technologies,
- 9980923226.''', cc: 'devopstrainingblr@gmail.com', from: '', replyTo: '', subject: 'Build is over!!', to: 'devopstrainingblr@gmail.com'
- }
- */
- 
- }
+            echo "GitHub BranhName ${env.BRANCH_NAME}"
+            echo "Jenkins Job Number ${env.BUILD_NUMBER}"
+            echo "Jenkins Node Name ${env.NODE_NAME}"
+
+            echo "Jenkins Home ${env.JENKINS_HOME}"
+            echo "Jenkins URL ${env.JENKINS_URL}"
+            echo "JOB Name ${env.JOB_NAME}"
+
+            stage('Poll SCM')
+                    {
+                        git branch: 'develop', credentialsId: '1b70f72e-2e9f-461a-9ae5-472619c69922',
+                                url: 'https://github.com/madhusudhancogn/dev-web-app2.git'
+                    }
+
+            stage('Build')
+                    {
+                        sh "${MAVEN_HOME}/bin/mvn clean package"
+                    }
+
+            stage('Sonar Scan')
+                    {
+                        sh "${MAVEN_HOME}/bin/mvn sonar:sonar"
+                    }
+
+            stage('Upload Artifacts')
+                    {
+                        sh "${MAVEN_HOME}/bin/mvn deploy"
+                    }
+
+            stage('Deploy Artifacts Into Tomcat')
+                    {
+                        sshagent(['6e48e8ae-fa2a-4ddb-952e-da672794b5ce']) {
+                            sh "scp -o  StrictHostKeyChecking=no target/dev-web-app2.war ec2-user@3.138.111.93:/opt/apache-tomcat-9.0.45/webapps"
+                        }
+                    }
+
+            stage('Send Email Notification') {
+                emailext body: '''Build Triggered
+               Thanks,
+               Madhu G''', subject: 'Jenkin Build Status', to: 'techmadhu63021@gmail.com'
+            }
+        }
+
