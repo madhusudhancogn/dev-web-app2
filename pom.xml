@@ -31,13 +31,13 @@
 
 	</properties>
 	
-	<repositories>
-		<repository>
-			<id>nexus</id>
-			<name>Remote Reposioty configure</name>
-			<url>http://3.134.115.36:9980/momusolutions/repository/remote-repo-momu/</url>
-		</repository>
-	</repositories>
+<!--	<repositories>-->
+<!--		<repository>-->
+<!--			<id>nexus</id>-->
+<!--			<name>Remote Reposioty configure</name>-->
+<!--			<url>http://3.134.115.36:9980/momusolutions/repository/remote-repo-momu/</url>-->
+<!--		</repository>-->
+<!--	</repositories>-->
 
 	<dependencies>
 		
